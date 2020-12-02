@@ -1,4 +1,4 @@
-// Copyright 2019 The Prometheus Authors
+// Copyright 2019, 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -24,21 +24,21 @@ import (
 )
 
 const ndbinfoLogbuffersQuery = `
-	SELECT node_id, log_type, log_id, log_part, total, used 
+	SELECT node_id, log_type, log_part, total, used 
 	FROM ndbinfo.logbuffers;
 	`
 
 var (
 	ndbinfoLogbuffersUsedDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "logbuffers_used"),
-		"Space used by each log",
-		[]string{"nodeID", "logType", "logPart", "logID"}, nil,
+		"Buffer space used by each log",
+		[]string{"nodeID", "logType", "logPart"}, nil,
 	)
 
 	ndbinfoLogbuffersTotalDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "logbuffers_total"),
-		"Total space available for each log",
-		[]string{"nodeID", "logType", "logPart", "logID"}, nil,
+		"Total buffer space available for each log",
+		[]string{"nodeID", "logType", "logPart"}, nil,
 	)
 )
 
@@ -69,23 +69,23 @@ func (ScrapeNdbinfoLogbuffers) Scrape(ctx context.Context, db *sql.DB, ch chan<-
 	defer ndbinfoLogbuffersRows.Close()
 
 	var (
-		nodeID, logID, logPart, used, total uint64
+		nodeID, logPart, used, total        uint64
 		logType                             string
 	)
 
 	// Iterate over the memory settings
 	for ndbinfoLogbuffersRows.Next() {
 		if err := ndbinfoLogbuffersRows.Scan(
-			&nodeID, &logType, &logID, &logPart, &total, &used); err != nil {
+			&nodeID, &logType, &logPart, &total, &used); err != nil {
 			return err
 		}
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoLogbuffersUsedDesc, prometheus.GaugeValue, float64(used),
-			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10), strconv.FormatUint(logID, 10))
+			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10))
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoLogbuffersTotalDesc, prometheus.GaugeValue, float64(total),
-			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10), strconv.FormatUint(logID, 10))
+			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10))
 	}
 	return nil
 }

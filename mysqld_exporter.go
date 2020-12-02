@@ -1,4 +1,4 @@
-// Copyright 2018 The Prometheus Authors
+// Copyright 2018, 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -90,6 +90,8 @@ var scrapers = map[collector.Scraper]bool{
 	collector.ScrapeSlaveHosts{}:                          false,
 	collector.ScrapeNdbinfoMemoryusage{}:                  true,
 	collector.ScrapeNdbinfoThreadstat{}:                   true,
+	collector.ScrapeNdbinfoCountersSPJ{}:                  true,
+	collector.ScrapeNdbinfoCountersTC{}:                   true,
 	collector.ScrapeNdbinfoClusterOperations{}:            true,
 	collector.ScrapeNdbinfoClusterTransactions{}:          true,
 	collector.ScrapeNdbinfoClusterLocks{}:                 true,
@@ -97,8 +99,12 @@ var scrapers = map[collector.Scraper]bool{
 	collector.ScrapeNdbinfoLogspaces{}:                    true,
 	collector.ScrapeNdbinfoDiskpagebuffers{}:              true,
 	collector.ScrapeNdbinfoDiskWriteSpeedAggregate{}:      true,
+	collector.ScrapeNdbinfoResources{}:                    true,
+	collector.ScrapeNdbinfoFreeMemory{}:                   true,
 	collector.ScrapeNdbinfoProcesses{}:                    true,
 	collector.ScrapeNdbinfoTransporters{}:                 true,
+	collector.ScrapeNdbinfoPgmanTimeTrack{}:               true,
+	collector.ScrapeNdbinfoTcTimeTrack{}:                  true,
 	collector.ScrapeFiles{}:                               true,
 }
 

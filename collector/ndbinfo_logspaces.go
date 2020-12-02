@@ -1,4 +1,4 @@
-// Copyright 2019 The Prometheus Authors
+// Copyright 2019, 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -24,7 +24,7 @@ import (
 )
 
 const ndbinfoLogspacesQuery = `
-	SELECT node_id, log_type, log_id, log_part, total, used 
+	SELECT node_id, log_type, log_part, total, used 
 	FROM ndbinfo.logspaces;
 	`
 
@@ -32,13 +32,13 @@ var (
 	ndbinfoLogspacesUsedDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "logspaces_used"),
 		"Space used by each log",
-		[]string{"nodeID", "logType", "logPart", "logID"}, nil,
+		[]string{"nodeID", "logType", "logPart"}, nil,
 	)
 
 	ndbinfoLogspacesTotalDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "logspaces_total"),
 		"Total space available for each log",
-		[]string{"nodeID", "logType", "logPart", "logID"}, nil,
+		[]string{"nodeID", "logType", "logPart"}, nil,
 	)
 )
 
@@ -62,30 +62,30 @@ func (ScrapeNdbinfoLogspaces) Version() float64 {
 
 // Scrape collects data from database connection and sends it over channel as prometheus metric
 func (ScrapeNdbinfoLogspaces) Scrape(ctx context.Context, db *sql.DB, ch chan<- prometheus.Metric) error {
-	ndbinfoLogspacesRows, err := db.QueryContext(ctx, ndbinfoLogbuffersQuery)
+	ndbinfoLogspacesRows, err := db.QueryContext(ctx, ndbinfoLogspacesQuery)
 	if err != nil {
 		return err
 	}
 	defer ndbinfoLogspacesRows.Close()
 
 	var (
-		nodeID, logID, logPart, used, total uint64
+		nodeID, logPart, used, total        uint64
 		logType                             string
 	)
 
 	// Iterate over the memory settings
 	for ndbinfoLogspacesRows.Next() {
 		if err := ndbinfoLogspacesRows.Scan(
-			&nodeID, &logType, &logID, &logPart, &total, &used); err != nil {
+			&nodeID, &logType, &logPart, &total, &used); err != nil {
 			return err
 		}
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoLogspacesUsedDesc, prometheus.GaugeValue, float64(used),
-			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10), strconv.FormatUint(logID, 10))
+			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10))
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoLogspacesTotalDesc, prometheus.GaugeValue, float64(total),
-			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10), strconv.FormatUint(logID, 10))
+			strconv.FormatUint(nodeID, 10), logType, strconv.FormatUint(logPart, 10))
 	}
 	return nil
 }

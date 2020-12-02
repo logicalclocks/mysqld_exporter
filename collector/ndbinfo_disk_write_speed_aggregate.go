@@ -1,4 +1,4 @@
-// Copyright 2019 The Prometheus Authors
+// Copyright 2019, 2020 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -24,31 +24,31 @@ import (
 )
 
 const ndbinfoDiskWriteSpeedAggregateQuery = `
-	SELECT node_id, thr_no, thread_name, backup_lcp_speed_last_10sec, redo_speed_last_10sec, 
+	SELECT node_id, thr_no, backup_lcp_speed_last_10sec, redo_speed_last_10sec, 
 	slowdowns_due_to_io_lag, slowdowns_due_to_high_cpu
-	FROM ndbinfo.disk_write_speed_aggregate INNER JOIN ndbinfo.threads USING (node_id, thr_no);
+	FROM ndbinfo.disk_write_speed_aggregate;
 	`
 
 var (
 	ndbinfoDiskWriteSpeedAggregateLcpDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "disk_write_speed_lcp"),
 		"Number of bytes written to disk by backup and LCP processes per second, averaged over the last 10 seconds for each node and thread",
-		[]string{"nodeID", "threadNO", "threadName"}, nil,
+		[]string{"nodeID", "threadNO"}, nil,
 	)
 	ndbinfoDiskWriteSpeedAggregateRedoDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "disk_write_speed_redo"),
 		"Number of bytes written to REDO log processes per second, averaged over the last 10 seconds for each node and thread",
-		[]string{"nodeID", "threadNO", "threadName"}, nil,
+		[]string{"nodeID", "threadNO"}, nil,
 	)
 	ndbinfoDiskWriteSpeedAggregateIOSlowdownDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "disk_write_speed_io_slowdown"),
 		"Number of seconds since last node start that disk writes were slowed due to REDO log I/O lag for each node and thread",
-		[]string{"nodeID", "threadNO", "threadName"}, nil,
+		[]string{"nodeID", "threadNO"}, nil,
 	)
 	ndbinfoDiskWriteSpeedAggregateCPUSlowdownDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "disk_write_speed_cpu_slowdown"),
 		"Number of seconds since last node start that disk writes were slowed due to high CPU usage for each node and thread",
-		[]string{"nodeID", "threadNO", "threadName"}, nil,
+		[]string{"nodeID", "threadNO"}, nil,
 	)
 )
 
@@ -80,31 +80,30 @@ func (ScrapeNdbinfoDiskWriteSpeedAggregate) Scrape(ctx context.Context, db *sql.
 
 	var (
 		nodeID, threadNO, lcpWrite, redoWrite, slowdownIO, slowdownCPU uint64
-		threadName                                                     string
 	)
 
 	// Iterate over the memory settings
 	for ndbinfoDiskWriteSpeedAggregateRows.Next() {
 		if err := ndbinfoDiskWriteSpeedAggregateRows.Scan(
-			&nodeID, &threadNO, &threadName, &lcpWrite, &redoWrite, &slowdownIO, &slowdownCPU); err != nil {
+			&nodeID, &threadNO, &lcpWrite, &redoWrite, &slowdownIO, &slowdownCPU); err != nil {
 			return err
 		}
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoDiskWriteSpeedAggregateLcpDesc, prometheus.GaugeValue, float64(lcpWrite),
-			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10), threadName)
+			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10))
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoDiskWriteSpeedAggregateRedoDesc, prometheus.GaugeValue, float64(redoWrite),
-			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10), threadName)
+			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10))
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoDiskWriteSpeedAggregateIOSlowdownDesc, prometheus.CounterValue, float64(slowdownIO),
-			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10), threadName)
+			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10))
 
 		ch <- prometheus.MustNewConstMetric(
 			ndbinfoDiskWriteSpeedAggregateCPUSlowdownDesc, prometheus.CounterValue, float64(slowdownCPU),
-			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10), threadName)
+			strconv.FormatUint(nodeID, 10), strconv.FormatUint(threadNO, 10))
 	}
 	return nil
 }
