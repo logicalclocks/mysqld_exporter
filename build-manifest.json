@@ -1,7 +1,6 @@
 [
     {
       "name": "hopsworks/mysqld_exporter",
-      "version": "env:VERSION",
-      "dockerFile": ""
+      "version": "env:VERSION"
     }
   ]
