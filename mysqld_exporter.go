@@ -107,6 +107,7 @@ var scrapers = map[collector.Scraper]bool{
 	collector.ScrapeNdbinfoTransporters{}:                 true,
 	collector.ScrapeNdbinfoPgmanTimeTrack{}:               true,
 	collector.ScrapeNdbinfoTcTimeTrack{}:                  true,
+	collector.ScrapeNdbinfoTableMemoryUsage{}:             true,
 	collector.ScrapeFiles{}:                               true,
 }
 
