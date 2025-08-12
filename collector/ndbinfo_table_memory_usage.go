@@ -85,6 +85,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 		freeDiskMemoryBytes uint64
 	)
 
+	// in case there are multiple clusters
 	dsn = os.Getenv("DATA_SOURCE_NAME")
 
 	for rows.Next() {
