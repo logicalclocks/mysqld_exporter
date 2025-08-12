@@ -18,6 +18,7 @@ package collector
 import (
 	"context"
 	"database/sql"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -31,25 +32,25 @@ var (
 	ndbTableMemoryInMemoryDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "table_memory_bytes"),
 		"Bytes of memory currently used in memory for the table",
-		[]string{"database", "table"}, nil,
+		[]string{"host", "database", "table"}, nil,
 	)
 
 	ndbTableMemoryFreeInMemoryDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "table_free_memory_bytes"),
 		"Bytes of free memory in memory for the table",
-		[]string{"database", "table"}, nil,
+		[]string{"host", "database", "table"}, nil,
 	)
 
 	ndbTableMemoryDiskMemoryDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "table_disk_bytes"),
 		"Bytes of disk memory used by the table",
-		[]string{"database", "table"}, nil,
+		[]string{"host", "database", "table"}, nil,
 	)
 
 	ndbTableMemoryFreeDiskMemoryDesc = prometheus.NewDesc(
 		prometheus.BuildFQName("ndb", ndbinfo, "table_free_disk_bytes"),
 		"Bytes of free disk memory for the table",
-		[]string{"database", "table"}, nil,
+		[]string{"host", "database", "table"}, nil,
 	)
 )
 
@@ -75,6 +76,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 	defer rows.Close()
 
 	var (
+		dsn                 string
 		databaseName        string
 		tableName           string
 		inMemoryBytes       uint64
@@ -82,6 +84,8 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 		diskMemoryBytes     uint64
 		freeDiskMemoryBytes uint64
 	)
+
+	dsn = os.Getenv("DATA_SOURCE_NAME")
 
 	for rows.Next() {
 		if err := rows.Scan(
@@ -99,6 +103,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 			ndbTableMemoryInMemoryDesc,
 			prometheus.GaugeValue,
 			float64(inMemoryBytes),
+			dsn,
 			databaseName,
 			tableName,
 		)
@@ -106,6 +111,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 			ndbTableMemoryFreeInMemoryDesc,
 			prometheus.GaugeValue,
 			float64(freeInMemoryBytes),
+			dsn,
 			databaseName,
 			tableName,
 		)
@@ -113,6 +119,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 			ndbTableMemoryDiskMemoryDesc,
 			prometheus.GaugeValue,
 			float64(diskMemoryBytes),
+			dsn,
 			databaseName,
 			tableName,
 		)
@@ -120,6 +127,7 @@ func (ScrapeNdbinfoTableMemoryUsage) Scrape(ctx context.Context, db *sql.DB, ch 
 			ndbTableMemoryFreeDiskMemoryDesc,
 			prometheus.GaugeValue,
 			float64(freeDiskMemoryBytes),
+			dsn,
 			databaseName,
 			tableName,
 		)
