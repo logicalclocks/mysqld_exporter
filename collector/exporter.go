@@ -59,6 +59,10 @@ var (
 		"exporter.log_slow_filter",
 		"Add a log_slow_filter to avoid slow query logging of scrapes. NOTE: Not supported by Oracle MySQL.",
 	).Default("false").Bool()
+	exporterMaxOpenConns = kingpin.Flag(
+		"exporter.max-open-conns",
+		"Maximum number of open connections to the database per scrape. 1 (default) serializes all collectors onto a single connection; higher values let independent collectors run concurrently but may incur higher load in the database.",
+	).Default("1").Int()
 )
 
 // Metric descriptors.
@@ -136,9 +140,15 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 	}
 	defer db.Close()
 
-	// By design exporter should use maximum one connection per request.
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	// Limit the number of connections used per scrape. Defaults to 1, which
+	// serializes all collectors; raising it lets independent collectors run
+	// concurrently at the cost of more simultaneous load on the database.
+	maxConns := *exporterMaxOpenConns
+	if maxConns < 1 {
+		maxConns = 1
+	}
+	db.SetMaxOpenConns(maxConns)
+	db.SetMaxIdleConns(maxConns)
 	// Set max lifetime for a connection.
 	db.SetConnMaxLifetime(1 * time.Minute)
 
