@@ -1,6 +1,11 @@
 [
-    {
-      "name": "hopsworks/mysqld_exporter",
-      "version": "env:VERSION"
+  {
+    "name": "hopsworks/mysqld_exporter",
+    "version": "env:VERSION",
+    "platforms": {
+      "append": [
+        "linux/arm64"
+      ]
     }
-  ]
+  }
+]
